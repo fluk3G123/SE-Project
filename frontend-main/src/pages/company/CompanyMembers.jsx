@@ -1,36 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import mockData from "../../components/ui/mockData.jsx";
 import InfoCard from "../../components/ui/InfoCard.jsx";
 import { Search, ArrowLeft } from "lucide-react";
 
 function CompanyMembers() {
-  const { company } = useParams(); // Change 'faculty' to 'company'
+  const { company } = useParams();
   const navigate = useNavigate();
-  const [searchCompany, setSearchCompany] = useState(company || ""); // Change 'faculty' to 'company'
-  const [filteredGraduates, setFilteredGraduates] = useState([]); // Keep the filteredGraduates state
+  const [searchCompany, setSearchCompany] = useState(company || "");
+  const [graduates, setGraduates] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Update the list of graduates based on search input
+  // Fetch graduates from backend
   useEffect(() => {
-    if (searchCompany) {
-      const matchedGraduates = mockData.filter((item) =>
-        item.company.toLowerCase().includes(searchCompany.toLowerCase()) // Change 'faculty' to 'company'
-      );
-      setFilteredGraduates(matchedGraduates);
-    } else {
-      setFilteredGraduates([]);
-    }
+    const fetchGraduates = async () => {
+      if (!searchCompany) return;
+      setLoading(true);
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/graduates-by-company?company=${encodeURIComponent(searchCompany)}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch graduates");
+        }
+        const data = await response.json();
+        setGraduates(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGraduates();
   }, [searchCompany]);
-
-  // Handler for Search icon click
-  const handleSearchClick = () => {
-    if (searchCompany) {
-      const matchedGraduates = mockData.filter((item) =>
-        item.company.toLowerCase().includes(searchCompany.toLowerCase()) // Change 'faculty' to 'company'
-      );
-      setFilteredGraduates(matchedGraduates);
-    }
-  };
 
   return (
     <div className="p-4 bg-[#FEEDED] min-h-screen">
@@ -51,15 +51,12 @@ function CompanyMembers() {
           <div className="w-3/5 flex items-center border rounded-lg p-2 bg-white">
             <input
               type="text"
-              placeholder="Search company..." // Change placeholder text
+              placeholder="Search company..."
               className="w-full p-2 outline-none"
-              value={searchCompany} // Change to searchCompany
-              onChange={(e) => setSearchCompany(e.target.value)} // Change to setSearchCompany
+              value={searchCompany}
+              onChange={(e) => setSearchCompany(e.target.value)}
             />
-            <Search
-              className="text-gray-500 ml-2 cursor-pointer"
-              onClick={handleSearchClick}
-            />
+            <Search className="text-gray-500 ml-2 cursor-pointer" />
           </div>
         </div>
       </div>
@@ -68,16 +65,22 @@ function CompanyMembers() {
         <h1 className="text-xl font-bold">
           {searchCompany ? `Graduates in ${searchCompany}` : "Search for a company"} 
         </h1>
-
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-h-[200px]">
-          {filteredGraduates.length > 0 ? (
-            filteredGraduates.map((item) => <InfoCard key={item.id} item={item} />)
-          ) : (
-            <div className="flex justify-center items-center w-full col-span-3">
-              <p className="text-gray-500 text-lg">No graduates found.</p> {/* Keep "graduates" text */}
-            </div>
-          )}
-        </div>
+        
+        {loading ? (
+          <p className="text-gray-500 text-lg">Loading...</p>
+        ) : error ? (
+          <p className="text-red-500 text-lg">Error: {error}</p>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-h-[200px]">
+            {graduates.length > 0 ? (
+              graduates.map((item) => <InfoCard key={item.studentId} item={item} />)
+            ) : (
+              <div className="flex justify-center items-center w-full col-span-3">
+                <p className="text-gray-500 text-lg">No graduates found.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

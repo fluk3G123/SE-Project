@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import mockData from "../../components/ui/mockData.jsx";
 import InfoCard from "../../components/ui/InfoCard.jsx";
 import { Search, ArrowLeft } from "lucide-react";
 
@@ -8,29 +7,35 @@ function FacultyMembers() {
   const { faculty } = useParams();
   const navigate = useNavigate();
   const [searchFaculty, setSearchFaculty] = useState(faculty || "");
-  const [filteredGraduates, setFilteredGraduates] = useState([]); // Change to filteredGraduates
+  const [graduates, setGraduates] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Update the list of graduates based on search input
+  // Fetch graduates from backend
   useEffect(() => {
+    const fetchGraduates = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/graduates?faculty=${encodeURIComponent(searchFaculty)}`);
+        if (response.status === 404) {
+          setGraduates([]);
+          throw new Error("No graduates found for this faculty.");
+        }
+        if (!response.ok) {
+          throw new Error(`Failed to fetch graduates: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        setGraduates(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
     if (searchFaculty) {
-      const matchedGraduates = mockData.filter((item) =>
-        item.faculty.toLowerCase().includes(searchFaculty.toLowerCase())
-      );
-      setFilteredGraduates(matchedGraduates); // Use setFilteredGraduates instead of setFilteredStudents
-    } else {
-      setFilteredGraduates([]);
+      fetchGraduates();
     }
   }, [searchFaculty]);
-
-  // Handler for Search icon click
-  const handleSearchClick = () => {
-    if (searchFaculty) {
-      const matchedGraduates = mockData.filter((item) =>
-        item.faculty.toLowerCase().includes(searchFaculty.toLowerCase())
-      );
-      setFilteredGraduates(matchedGraduates); // Use setFilteredGraduates
-    }
-  };
 
   return (
     <div className="p-4 bg-[#FEEDED] min-h-screen">
@@ -56,10 +61,7 @@ function FacultyMembers() {
               value={searchFaculty}
               onChange={(e) => setSearchFaculty(e.target.value)}
             />
-            <Search
-              className="text-gray-500 ml-2 cursor-pointer"
-              onClick={handleSearchClick}
-            />
+            <Search className="text-gray-500 ml-2 cursor-pointer" />
           </div>
         </div>
       </div>
@@ -68,16 +70,22 @@ function FacultyMembers() {
         <h1 className="text-xl font-bold">
           {searchFaculty ? `Graduates in ${searchFaculty}` : "Search for a faculty"}
         </h1>
-
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-h-[200px]">
-          {filteredGraduates.length > 0 ? (
-            filteredGraduates.map((item) => <InfoCard key={item.id} item={item} />)
-          ) : (
-            <div className="flex justify-center items-center w-full col-span-3">
-              <p className="text-gray-500 text-lg">No graduates found.</p> {/* Changed text to "graduates" */}
-            </div>
-          )}
-        </div>
+        
+        {loading ? (
+          <p className="text-gray-500 text-lg">Loading...</p>
+        ) : error ? (
+          <p className="text-red-500 text-lg">Error: {error}</p>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-h-[200px]">
+            {graduates.length > 0 ? (
+              graduates.map((item, index) => <InfoCard key={item.studentId || index} item={item} />)
+            ) : (
+              <div className="flex justify-center items-center w-full col-span-3">
+                <p className="text-gray-500 text-lg">No graduates found.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
