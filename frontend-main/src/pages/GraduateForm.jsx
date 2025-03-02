@@ -41,7 +41,6 @@ function GraduateForm() {
     
     const handleChange = (e) => {
         const { name, value, dataset } = e.target;
-
         if (dataset.parent && ["day", "month", "year"].includes(name)) {
             setFormData((prevData) => ({
                 ...prevData,
@@ -51,13 +50,13 @@ function GraduateForm() {
                 },
             }));
         } else if (dataset.section) {
-            if (["day", "month", "year"].includes(name) && dataset.dateField) {
+            if (["day", "month", "year"].includes(name) && dataset.datefield) {
                 setFormData((prevData) => ({
                     ...prevData,
                     [dataset.section]: {
                         ...prevData[dataset.section],
-                        [dataset.dateField]: {
-                            ...prevData[dataset.section][dataset.dateField],
+                        [dataset.datefield]: {
+                            ...prevData[dataset.section][dataset.datefield],
                             [name]: value
                         }
                     },
@@ -651,6 +650,10 @@ function GraduateForm() {
                                                 <select
                                                     name="day"
                                                     className="w-1/3 p-4 rounded-lg border border-gray-300 bg-white text-center focus:ring-2 focus:ring-[#b24e50] focus:outline-none"
+                                                    data-section="career"
+                                                    data-datefield="dateOfEmployment"
+                                                    value={formData.career.dateOfEmployment.day} 
+                                                    onChange={handleChange}
                                                 >
                                                     <option value="">Day</option>
                                                     {[...Array(31)].map((_, index) => (
@@ -661,6 +664,10 @@ function GraduateForm() {
                                                 <select
                                                     name="month"
                                                     className="w-1/3 p-4 rounded-lg border border-gray-300 bg-white text-center focus:ring-2 focus:ring-[#b24e50] focus:outline-none"
+                                                    data-section="career"
+                                                    data-datefield="dateOfEmployment"
+                                                    value={formData.career.dateOfEmployment.month} 
+                                                    onChange={handleChange}
                                                 >
                                                     <option value="">Month</option>
                                                     {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((month, index) => (
@@ -671,6 +678,10 @@ function GraduateForm() {
                                                 <select
                                                     name="year"
                                                     className="w-1/3 p-4 rounded-lg border border-gray-300 bg-white text-center focus:ring-2 focus:ring-[#b24e50] focus:outline-none"
+                                                    data-section="career"
+                                                    data-datefield="dateOfEmployment"
+                                                    value={formData.career.dateOfEmployment.year} 
+                                                    onChange={handleChange}
                                                 >
                                                     <option value="">Year</option>
                                                     {[...Array(100)].map((_, index) => (
