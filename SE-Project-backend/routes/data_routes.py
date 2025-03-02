@@ -1,78 +1,69 @@
 from flask import Blueprint, request, jsonify
-from models import student_data_db
-from models import graduate_data_db
+from models import student_data_db, graduate_data_db
 from flask_cors import CORS
 
 data_bp = Blueprint('data', __name__)
 CORS(data_bp)
 
-# ฟังก์ชันเลือกบริษัท
-@data_bp.route('/hendle-selection-company', methods=['POST'])
-def hendle_selection_Company():
+# ✅ เพิ่ม endpoint สำหรับดึงข้อมูลบัณฑิตทั้งหมด
+@data_bp.route('/graduate-data', methods=['GET'])
+def get_graduate_data():
+    try:
+        return jsonify(list(graduate_data_db.values())), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ✅ ฟังก์ชันเลือกบริษัท
+@data_bp.route('/handle-selection-company', methods=['POST'])
+def handle_selection_company():
     data = request.get_json()
     selected_company = data.get('selectedCompany')
-
-    print("Selected Company:", selected_company)
 
     if not selected_company:
         return jsonify({"status": "error", "message": "No company selected"}), 400
 
-    # ค้นหา user ที่มี companyName ตรงกับ selected_company
     matching_data_company = [
         user_data for user_data in graduate_data_db.values()
         if user_data.get('companyName') == selected_company
     ]
 
-    if matching_data_company:
-        return jsonify({"status": "success", "matchingDataStudent": matching_data_company}), 200
-    else:
-        return jsonify({"status": "no_match", "message": "No matching company found"}), 200
+    return jsonify({"status": "success" if matching_data_company else "no_match", 
+                    "matchingDataStudent": matching_data_company}), 200
 
 
-# ฟังก์ชันเลือกคณะ
-@data_bp.route('/hendle-selection-faculty', methods=['POST'])
-def hendle_selection_faculty():
+# ✅ ฟังก์ชันเลือกคณะ
+@data_bp.route('/handle-selection-faculty', methods=['POST'])
+def handle_selection_faculty():
     data = request.get_json()
     selected_faculty = data.get('selectedFaculty')
-
-    print("Selected Faculty:", selected_faculty)
-
 
     if not selected_faculty:
         return jsonify({"status": "error", "message": "No faculty selected"}), 400
 
-    # ค้นหา user ที่มี facultyName ตรงกับ selected_faculty
     matching_data_faculty = [
         user_data for user_data in graduate_data_db.values()
         if user_data.get('faculty') == selected_faculty
     ]
 
-    if matching_data_faculty:
-        return jsonify({"status": "success", "matchingDataStudent": matching_data_faculty}), 200
-    else:
-        return jsonify({"status": "no_match", "message": "No matching faculty found"}), 200
+    return jsonify({"status": "success" if matching_data_faculty else "no_match", 
+                    "matchingDataStudent": matching_data_faculty}), 200
 
-# ฟังก์ชันเลือกตำแหน่งงาน
+# ✅ ฟังก์ชันเลือกตำแหน่งงาน
 @data_bp.route('/handle-selection-jobPosition', methods=['POST'])
 def handle_selection_job_position():
     data = request.get_json()
     selected_job_position = data.get('selectedJobPosition')
 
-    print("Selected Job Position:", selected_job_position)
-
     if not selected_job_position:
         return jsonify({"status": "error", "message": "No job position selected"}), 400
 
-    # ค้นหา user ที่มี jobPosition ตรงกับ selected_job_position
     matching_data_job_position = [
         user_data for user_data in graduate_data_db.values()
         if user_data.get('jobPosition') == selected_job_position
     ]
 
-    if matching_data_job_position:
-        return jsonify({"status": "success", "matchingDataStudent": matching_data_job_position}), 200
-    else:
-        return jsonify({"status": "no_match", "message": "No matching job position found"}), 200
+    return jsonify({"status": "success" if matching_data_job_position else "no_match", 
+                    "matchingDataStudent": matching_data_job_position}), 200
 
 # ฟังก์ชันเพิ่มข้อมูลนักศึกษา
 @data_bp.route('/student-form', methods=['POST'])
@@ -137,6 +128,7 @@ def Graduate():
         "academicProjects": data.get('academicProjects'),
         "internship": data.get('internship'),
         "career": data.get('career'),
+        "profileImage": ""
     }
 
     print(type(graduate_data_db)) 

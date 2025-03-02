@@ -6,7 +6,7 @@ function InfoCard({ item }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/faculties/${item.faculty}/members/${item.id}`, { state: { item } });
+    navigate(`/faculties/${item.faculty}/members/${item.studentId}`, { state: { item } });
   };
 
   return (
@@ -16,11 +16,11 @@ function InfoCard({ item }) {
     >
       <img 
         src={item.profileImage || userProfile}  
-        alt={`${item.firstname} ${item.lastname}`} 
+        alt={`${item.fullName}`} 
         className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
       />
-      <h2 className="text-lg font-semibold">{item.firstname} {item.lastname}</h2>
-      <p className="text-gray-600">{item.careerPosition} @ {item.careerCompany}</p>
+      <h2 className="text-lg font-semibold">{item.fullName}</h2>
+      <p className="text-gray-600">{item.career?.position || "N/A"} @ {item.career?.company || "N/A"}</p>
       <p className="text-gray-800 font-medium">{item.faculty}</p>
     </div>
   );
