@@ -1,10 +1,11 @@
-import React, {  useState } from 'react';
+import React, { useState } from 'react';
 import StudentNavbar from '../components/ui/StudentNavbar'; // Import FormNavbar
 import { useNavigate } from "react-router-dom";
 
 function StudentForm() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("personal");
+    const [profileImage, setProfileImage] = useState(null); // เก็บไฟล์โปรไฟล์
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -21,44 +22,47 @@ function StudentForm() {
         academicProjects: ''
     });
 
+    // ✅ Handle form field changes
     const handleChange = (e) => {
         const { name, value, dataset } = e.target;
-
         if (["day", "month", "year"].includes(name)) {
-            setFormData((prevData) => ({
-                ...prevData,
-                [dataset.parent]: {
-                    ...prevData[dataset.parent],
-                    [name]: value,
-                },
+            setFormData(prev => ({
+                ...prev,
+                [dataset.parent]: { ...prev[dataset.parent], [name]: value }
             }));
         } else {
-            setFormData({
-                ...formData,
-                [name]: value,
-            });
+            setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
 
+    // ✅ Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const formDataToSend = new FormData();
 
-        const formattedData = {
-            ...formData,
-            dateOfBirth: `${formData.dateOfBirth.year}-${formData.dateOfBirth.month}-${formData.dateOfBirth.day}`,
-            yearOfEnrollment: `${formData.yearOfEnrollment.year}-${formData.yearOfEnrollment.month}-${formData.yearOfEnrollment.day}`,
-        };
+        // Append form data
+        Object.entries(formData).forEach(([key, value]) => {
+            if (typeof value === 'object') {
+                formDataToSend.append(key, JSON.stringify(value));
+            } else {
+                formDataToSend.append(key, value);
+            }
+        });
+
+        // Append profile image if available
+        if (profileImage) {
+            formDataToSend.append('profileImage', profileImage);
+        }
 
         try {
             const response = await fetch('http://127.0.0.1:5000/student-form', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formattedData),
+                body: formDataToSend
             });
 
             if (response.ok) {
                 alert('Data submitted successfully!');
-                navigate("/dashboard")
+                navigate("/dashboard");
             } else {
                 alert('Error submitting data');
             }
@@ -68,9 +72,13 @@ function StudentForm() {
         }
     };
 
+
     return (
         <div className="flex bg-[#FEEDED]">
-            <StudentNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+            <StudentNavbar 
+                activeTab={activeTab} 
+                onTabChange={setActiveTab} 
+                onProfileImageChange={setProfileImage}/>
             {/* Main Form Content */}
             <div className="w-full max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg">
                 <h1 className="text-3xl font-semibold text-gray-800 text-center mb-6 mt-10">

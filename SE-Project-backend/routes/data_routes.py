@@ -1,16 +1,38 @@
-from flask import Flask, Blueprint, request, jsonify
+from flask import Flask, Blueprint, request, jsonify , send_from_directory
 from flask_cors import CORS
+import os
+from werkzeug.utils import secure_filename
 from models import student_data_db, graduate_data_db
 
 app = Flask(__name__)
 data_bp = Blueprint('data', __name__)
 CORS(data_bp)
 
-# ✅ เพิ่ม endpoint สำหรับดึงข้อมูลบัณฑิตทั้งหมด
+# ✅ กำหนดโฟลเดอร์สำหรับอัปโหลด
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')  # ใช้ path ของโปรเจค backend
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # สร้างโฟลเดอร์ถ้ายังไม่มี
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ✅ Endpoint สำหรับเสิร์ฟรูปภาพจากโฟลเดอร์ uploads
+@data_bp.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+# ✅ Endpoint สำหรับดึงข้อมูลบัณฑิตทั้งหมด
 @data_bp.route('/graduate-data', methods=['GET'])
 def get_graduate_data():
     try:
-        return jsonify(list(graduate_data_db.values())), 200
+        graduates = list(graduate_data_db.values())
+        for grad in graduates:
+            if grad.get("profileImage"):  # แปลง path ให้เป็น URL
+                filename = os.path.basename(grad['profileImage'])
+                grad["profileImage"] = f"http://127.0.0.1:5000/uploads/{filename}"
+        return jsonify(graduates), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
     
@@ -86,12 +108,24 @@ def get_graduates_by_career():
 # ✅ ฟังก์ชันเพิ่มข้อมูลนักศึกษา
 @data_bp.route('/student-form', methods=['POST'])
 def Student():
-    data = request.get_json()
+    if 'profileImage' in request.files:
+        profile_image = request.files['profileImage']
+        if profile_image and allowed_file(profile_image.filename):
+            filename = secure_filename(profile_image.filename)
+            file_path = os.path.join("uploads", filename).replace("\\", "/")
+            profile_image.save(file_path)
+            file_path = f"/uploads/{filename}"  # เปลี่ยนเป็น URL
+        else:
+            return jsonify({"status": "error", "message": "Invalid file type"}), 400
+    else:
+        file_path = ""  # ไม่มีไฟล์อัปโหลด
 
+    data = request.form.to_dict()
     required_fields = ['firstName', 'lastName', 'studentId', 'gender', 'dateOfBirth', 'email',
-                        'phoneNumber','faculty','major','yearOfEnrollment','currentAcademicYear',
-                        'extracurricularActivities','academicProjects']
-    if not all(key in data for key in required_fields):
+                        'phoneNumber', 'faculty', 'major', 'yearOfEnrollment', 'currentAcademicYear',
+                        'extracurricularActivities', 'academicProjects']
+
+    if not all(field in data for field in required_fields):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
 
     student_id = data.get('studentId')
@@ -108,20 +142,37 @@ def Student():
         "currentAcademicYear": data.get('currentAcademicYear'),
         "extracurricularActivities": data.get('extracurricularActivities'),
         "academicProjects": data.get('academicProjects'),
+        "profileImage": file_path
     }
-    return jsonify({"message": "Data received successfully"}), 200
+    return jsonify({"message": "Student data received successfully"}), 200
 
-# ✅ ฟังก์ชันเพิ่มข้อมูลบัณฑิต
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
+
 @data_bp.route('/graduate-form', methods=['POST'])
 def Graduate():
-    data = request.get_json()
+    if 'profileImage' in request.files:
+        profile_image = request.files['profileImage']
+        if profile_image and allowed_file(profile_image.filename):
+            filename = secure_filename(profile_image.filename)
+            file_path = os.path.join("uploads", filename).replace("\\", "/")
+            profile_image.save(file_path)
+            file_path = f"/uploads/{filename}"  # เปลี่ยนเป็น URL
+        else:
+            return jsonify({"status": "error", "message": "Invalid file type"}), 400
+    else:
+        file_path = ""  # ไม่มีไฟล์อัปโหลด
+    
+    data = request.form.to_dict()
     required_fields = ['firstName', 'lastName', 'studentId', 'gender', 'dateOfBirth', 'email',
                         'phoneNumber', 'faculty', 'major', 'yearOfEnrollment', 'currentAcademicYear',
-                        'extracurricularActivities', 'academicProjects', 'internship', 'career']
+                        'extracurricularActivities', 'academicProjects', 'internshipStatus',
+                        'internshipCompany', 'internshipPosition', 'internshipDuration', 'internshipTask', 'internshipExperience',
+                        'careerStatus', 'careerCompany', 'careerPosition', 'dateOfEmployment', 'careerTask', 'careerExperience']
     
-    if not all(key in data for key in required_fields):
+    if not all(field in data for field in required_fields):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
-
+    
     graduate_id = data.get('studentId')
     graduate_data_db[graduate_id] = {
         "fullName": f"{data.get('firstName')} {data.get('lastName')}",
@@ -136,10 +187,25 @@ def Graduate():
         "currentAcademicYear": data.get('currentAcademicYear'),
         "extracurricularActivities": data.get('extracurricularActivities'),
         "academicProjects": data.get('academicProjects'),
-        "internship": data.get('internship'),
-        "career": data.get('career'),
-        "profileImage": ""
+        "internship": {
+            "status": data.get('internshipStatus'),
+            "company": data.get('internshipCompany'),
+            "position": data.get('internshipPosition'),
+            "duration": data.get('internshipDuration'),
+            "task": data.get('internshipTask'),
+            "experience": data.get('internshipExperience')
+        },
+        "career": {
+            "status": data.get('careerStatus'),
+            "company": data.get('careerCompany'),
+            "position": data.get('careerPosition'),
+            "dateOfEmployment": data.get('dateOfEmployment'),
+            "task": data.get('careerTask'),
+            "experience": data.get('careerExperience')
+        },
+        "profileImage": file_path
     }
+    print("Updated User Data Database:", graduate_data_db)
     return jsonify({"message": "Graduate data received successfully"}), 200
 
 # ✅ เพิ่ม Blueprint ให้ API ใช้งานได้

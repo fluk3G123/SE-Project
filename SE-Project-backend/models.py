@@ -30,7 +30,7 @@ graduate_data_db = {
             "task": "Developing web applications and optimizing backend services",
             "experience": "Expert in React.js, Node.js, and GraphQL"
         },
-        "profileImage": "https://i.pinimg.com/736x/17/8b/1b/178b1b7bd863091af857e03642297234.jpg"
+        "profileImage": r"\uploads\S__4055050_0.jpg"
     },
     "1002": {
         "fullName": "Bob Smith",
@@ -60,7 +60,8 @@ graduate_data_db = {
             "dateOfEmployment": "2019-09-01",
             "task": "Designing and implementing cloud architectures for clients",
             "experience": "Specialist in AWS Lambda, S3, and DynamoDB"
-        }
+        },
+        "profileImage": r"\uploads\S__4055061_0.jpg"
     },
     "1003": {
         "fullName": "Charlie Brown",
@@ -151,7 +152,7 @@ graduate_data_db = {
             "task": "",
             "experience": "Actively seeking opportunities in data science"
         }
-    }
+    },
 }
 # เก็บข้อมูลของบัณฑิตที่จบแล้ว
 user_account_types = {}  # เก็บประเภทบัญชีของผู้ใช้ (email -> account_type)

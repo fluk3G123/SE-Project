@@ -1,13 +1,17 @@
 import { User, Menu, ChevronLeft } from 'lucide-react';
 import React, { useState } from 'react';
 
-function StudentNavbar({ activeTab, onTabChange }) {
+function StudentNavbar({ activeTab, onTabChange, onProfileImageChange }) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [profileImage, setProfileImage] = useState(null);
+    const [profileFile, setProfileFile] = useState(null);
 
     const handleImageChange = (event) => {
         if (event.target.files && event.target.files[0]) {
-            setProfileImage(URL.createObjectURL(event.target.files[0]));
+            const file = event.target.files[0];
+            setProfileImage(URL.createObjectURL(file));
+            setProfileFile(file); 
+            onProfileImageChange(file); // ส่งไฟล์ไปยัง StudentForm
         }
     };
 
@@ -18,14 +22,12 @@ function StudentNavbar({ activeTab, onTabChange }) {
 
     return (
         <div className="flex h-screen">
-            <div className={`${
-    isCollapsed ? 'w-16' : 'w-64 md:w-72 lg:w-80 xl:w-96'
-  } flex flex-col shrink-0 transition-all duration-300 bg-white shadow-lg`}>
+            <div className={`${isCollapsed ? 'w-16' : 'w-64'} flex flex-col transition-all duration-300 bg-white shadow-lg`}>
                 <div className="bg-[#b24e50] p-4 text-white flex items-center justify-between">
                     {!isCollapsed && (
                         <div className="flex flex-col items-center w-full">
-                            <div className="text-lg font-bold mb-2">Welcome !</div>
-                            <div className="text-sm mb-2">Choose a picture to set as your profile</div>
+                            <div className="text-lg font-bold mb-2">Welcome!</div>
+                            <div className="text-sm mb-2">Choose a profile picture</div>
                             <div className="relative w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-white">
                                 {profileImage ? <img src={profileImage} alt="Profile" className="w-full h-full object-cover" /> : <User size={24} className="text-gray-400" />}
                             </div>
