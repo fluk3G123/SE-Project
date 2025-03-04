@@ -1,10 +1,39 @@
 import { User, Menu, ChevronLeft } from 'lucide-react';
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom'; // Import useLocation hook
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 function HomeNavbar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [userData, setUserData] = useState(null); // เก็บข้อมูล current user
   const location = useLocation(); // Get current location/path
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token'); // ใช้ JWT Token จาก Local Storage
+        if (!token) return;
+
+        const response = await fetch('http://127.0.0.1:5000/current-user', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        } else {
+          console.error('Failed to fetch user data');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <div className="flex min-h-screen">
@@ -19,12 +48,26 @@ function HomeNavbar() {
           {!isCollapsed && (
             <div className="flex items-center">
               <div className="relative w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-white">
-                <User size={24} className="text-gray-400" />
+                {userData && userData.profileImage ? (
+                  <img
+                    src={userData.profileImage}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={24} className="text-gray-400" />
+                )}
               </div>
               <div className="ml-3">
-                <div className="text-lg font-bold">Firstname Lastname</div>
-                <div className="text-sm">Faculty</div>
-                <div className="text-sm">Major</div>
+                <div className="text-lg font-bold">
+                  {userData ? userData.fullName : 'Loading...'}
+                </div>
+                <div className="text-sm"> {"Faculty : "} 
+                  {userData ? userData.faculty : 'Loading...'}
+                </div>
+                <div className="text-sm"> {"Major : "}
+                  {userData ? userData.major : 'Loading...'}
+                </div>
               </div>
             </div>
           )}
@@ -39,7 +82,7 @@ function HomeNavbar() {
 
         {/* Navigation Menu */}
         <div className="flex-1 bg-gray-100 overflow-y-auto">
-          {[ 
+          {[
             { label: 'Dashboard', path: '/dashboard' },
             { label: 'Search by Faculty/Field of Study', path: '/faculties' },
             { label: 'Search by Company', path: '/companies' },

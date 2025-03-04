@@ -1,5 +1,6 @@
 from flask import Flask, Blueprint, request, jsonify , send_from_directory
 from flask_cors import CORS
+from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 from werkzeug.utils import secure_filename
 from models import student_data_db, graduate_data_db
@@ -17,6 +18,30 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# ✅ Endpoint ดึงข้อมูลของผู้ใช้ที่ล็อกอินอยู่
+@data_bp.route('/current-user', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    current_email = get_jwt_identity()  # ดึงอีเมลของผู้ใช้ที่ล็อกอิน
+    print(f"🔍 Looking for user: {current_email}")  # Debug: แสดงอีเมลที่ใช้ค้นหา
+
+    # ลองค้นหาใน student_data_db ก่อน
+    user_data = student_data_db.get(current_email)
+
+    if user_data:
+        print(f"✅ Found in student_data_db: {user_data}")
+    else:
+        print(f"⚠️ Not found in student_data_db, searching in student_data_db...")
+        user_data = graduate_data_db.get(current_email)
+
+    if user_data:
+        print(f"✅ Found user data: {user_data}")
+        return jsonify(user_data), 200
+    else:
+        print(f"❌ User not found in both databases.")
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
 
 # ✅ Endpoint สำหรับเสิร์ฟรูปภาพจากโฟลเดอร์ uploads
 @data_bp.route('/uploads/<filename>')
@@ -128,10 +153,10 @@ def Student():
     if not all(field in data for field in required_fields):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
 
-    student_id = data.get('studentId')
-    student_data_db[student_id] = {
+    student_email = data.get('email')
+    student_data_db[student_email] = {
         "fullName": f"{data.get('firstName')} {data.get('lastName')}",
-        "studentId": student_id,
+        "studentId": data.get('studentId'),
         "gender": data.get('gender'),
         "dateOfBirth": data.get('dateOfBirth'),
         "email": data.get('email'),
@@ -173,10 +198,10 @@ def Graduate():
     if not all(field in data for field in required_fields):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
     
-    graduate_id = data.get('studentId')
-    graduate_data_db[graduate_id] = {
+    graduate_email = data.get('email')
+    graduate_data_db[graduate_email] = {
         "fullName": f"{data.get('firstName')} {data.get('lastName')}",
-        "studentId": graduate_id,
+        "studentId": data.get('studentId'),
         "gender": data.get('gender'),
         "dateOfBirth": data.get('dateOfBirth'),
         "email": data.get('email'),

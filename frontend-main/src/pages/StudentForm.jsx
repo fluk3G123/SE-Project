@@ -34,10 +34,24 @@ function StudentForm() {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
+    const handleProfileImageChange = (file) => {
+        setProfileImage(file);
+    };
 
     // ✅ Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const formattedData = {
+            ...formData,
+            dateOfBirth: formData.dateOfBirth?.year && formData.dateOfBirth?.month && formData.dateOfBirth?.day
+                ? `${formData.dateOfBirth.year}-${formData.dateOfBirth.month}-${formData.dateOfBirth.day}`
+                : '',
+            yearOfEnrollment: formData.yearOfEnrollment?.year && formData.yearOfEnrollment?.month && formData.yearOfEnrollment?.day
+                ? `${formData.yearOfEnrollment.year}-${formData.yearOfEnrollment.month}-${formData.yearOfEnrollment.day}`
+                : '',
+        };
+
         const formDataToSend = new FormData();
 
         // Append form data
@@ -71,6 +85,7 @@ function StudentForm() {
             alert('An error occurred while submitting the form');
         }
     };
+
 
 
     return (
